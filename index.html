@@ -182,6 +182,7 @@ nav .nav-r a:hover{color:var(--text)}
     <div class="tab" data-tab="1">STATIC ANALYSIS</div>
     <div class="tab" data-tab="2">THREAT HUNT</div>
     <div class="tab" data-tab="3">OSI · PCAP</div>
+    <div class="tab" data-tab="4">FUZZ SWARM</div>
   </div>
   <div id="viz-ui">
     <div id="v-hud">
@@ -199,7 +200,7 @@ nav .nav-r a:hover{color:var(--text)}
     </div>
     <div id="v-ticker"></div>
     <div id="v-prov">Not a simulation. Derived from strace -f -c kernel capture.<br>Syscall counts are real. Decay: I(t) = I₀·e⁻ᵏᵗ</div>
-    <div id="v-keys">SPACE pause · +/- speed · R restart · ESC exit · 1/2/3/4 missions</div>
+    <div id="v-keys">SPACE pause · +/- speed · R restart · ESC exit · 1-5 missions</div>
   </div>
   <canvas id="c"></canvas>
 </div>
@@ -227,6 +228,7 @@ nav .nav-r a:hover{color:var(--text)}
     {label:'Static Analysis',sub:'Fast meets slow',col:'#e8a030',idx:1,glow:.3,halo:0},
     {label:'Threat Hunt',sub:'8 hunters · kill chain',col:'#f87171',idx:2,glow:.3,halo:0},
     {label:'OSI · PCAP',sub:'Physics finds the beacon',col:'#34d399',idx:3,glow:.3,halo:0},
+    {label:'Fuzz Swarm',sub:'2.1M syscalls · 30s',col:'#ff6633',idx:4,glow:.3,halo:0},
   ];
   const medges=[],mparticles=[],mstars=[];
   let hover=-1;
@@ -238,13 +240,13 @@ nav .nav-r a:hover{color:var(--text)}
     const rx=sw*(compact?.32:.3),ry=sh*(compact?.3:.28);
     const nr=compact?18:22;
     MNODES.forEach((n,i)=>{
-      const a=-Math.PI/2+i/4*Math.PI*2;
+      const a=-Math.PI/2+i/MNODES.length*Math.PI*2;
       n.x=cxx+Math.cos(a)*rx;
       n.y=cyy+Math.sin(a)*ry;
       n.r=nr;
     });
     medges.length=0;
-    for(let i=0;i<4;i++)for(let j=i+1;j<4;j++)medges.push({a:i,b:j,glow:0});
+    for(let i=0;i<MNODES.length;i++)for(let j=i+1;j<MNODES.length;j++)medges.push({a:i,b:j,glow:0});
     mstars.length=0;
     for(let i=0;i<80;i++)mstars.push({x:Math.random()*sw,y:Math.random()*sh,r:Math.random()*.8+.2,a:.1+Math.random()*.2,tw:Math.random()*6});
   }
@@ -471,9 +473,67 @@ outer:['flow:2077','flow:2079','flow:2073','flow:4942','flow:1367','flow:443','f
 findings:[{t:5,f:'FLQ',s:'HIGH',m:'beacon 0.792 :2077'},{t:6,f:'FLQ',s:'HIGH',m:'beacon 0.753 :2079'},{t:7,f:'FLQ',s:'HIGH',m:'beacon 0.741 :2073'},{t:8,f:'FLQ',s:'MEDIUM',m:'beacon 0.736 :4942'},{t:9,f:'FLQ',s:'MEDIUM',m:'beacon 0.731 :1367'},{t:12,f:'TCP',s:'MEDIUM',m:'SYN flood :445'},{t:15,f:'TCP',s:'LOW',m:'847 RSTs in 60s'},{t:18,f:'TCP',s:'MEDIUM',m:'12% retransmit'},{t:14,f:'DNS2',s:'HIGH',m:'TXT tunnel 200+ queries'},{t:20,f:'DNS2',s:'MEDIUM',m:'DGA high entropy'},{t:25,f:'DNS2',s:'HIGH',m:'fast-flux 42 IPs'},{t:16,f:'TLS2',s:'MEDIUM',m:'JA3 Cobalt Strike'},{t:22,f:'TLS2',s:'LOW',m:'self-signed :2077'},{t:28,f:'TLS2',s:'MEDIUM',m:'cert reuse 3 flows'},{t:20,f:'HTP',s:'MEDIUM',m:'GET every ~180s'},{t:30,f:'HTP',s:'LOW',m:'UA: Mozilla/4.0 kelihos'},{t:45,f:'BCN',s:'CRITICAL',m:'C2 CONFIRMED :2077'},{t:50,f:'BCN',s:'HIGH',m:'C2 CANDIDATE :2079'},{t:55,f:'BCN',s:'HIGH',m:'12 above threshold'},{t:60,f:'BCN',s:'MEDIUM',m:'period 60s-300s'},{t:52,f:'C2P',s:'HIGH',m:'180s ± 27s jitter'},{t:58,f:'C2P',s:'HIGH',m:'TCP binary :2077'},{t:65,f:'C2P',s:'MEDIUM',m:'bad ASN 193.232'},{t:72,f:'C2P',s:'HIGH',m:'Kelihos signature'},{t:62,f:'FLW',s:'HIGH',m:'DNS+TCP+beacon same src'},{t:75,f:'FLW',s:'CRITICAL',m:'kill chain DNS→TCP→HTTP→C2'},{t:85,f:'FLW',s:'HIGH',m:'lateral: 6 internal IPs'},{t:125,f:'CON',s:'CRITICAL',m:'Kelihos C2 confirmed'},{t:135,f:'CON',s:'CRITICAL',m:'LSR=0.594 GOE regime'},{t:145,f:'CON',s:'HIGH',m:'ACF 180s Floquet locked'},{t:155,f:'CON',s:'HIGH',m:'12 beacons 3 C2 servers'},{t:165,f:'CON',s:'CRITICAL',m:'T1071+T1573+T1008'}],
 reinforcements:[{t:17,a:'TCP',b:'FLQ'},{t:23,a:'DNS2',b:'FLQ'},{t:27,a:'TLS2',b:'FLQ'},{t:32,a:'HTP',b:'TCP'},{t:35,a:'DNS2',b:'TLS2'},{t:48,a:'BCN',b:'FLQ'},{t:53,a:'BCN',b:'TCP'},{t:58,a:'C2P',b:'BCN'},{t:63,a:'C2P',b:'DNS2'},{t:68,a:'FLW',b:'BCN'},{t:73,a:'FLW',b:'C2P'},{t:78,a:'FLW',b:'FLQ'},{t:80,a:'FLW',b:'TCP'},{t:82,a:'FLW',b:'DNS2'},{t:84,a:'FLW',b:'TLS2'},{t:86,a:'FLW',b:'HTP'},...Array.from({length:12},(_,i)=>({t:128+i*4,a:'CON',b:['FLQ','TCP','DNS2','TLS2','HTP','BCN','C2P','FLW','FLQ','BCN','C2P','FLW'][i]}))],
 storm:{id:'FLQ',t0:0,t1:25,rate:.7,col:'#c792ea44'}},
+
+{name:'FUZZ SWARM',sub:'2.1M syscalls · AFL++ 37K execs + libfuzzer 1M execs · 30s · ASAN confirmed',tt:150,
+phases:[
+{id:'AFL',ti:1,t0:0,t1:80,l:'AFL++',d:'1,245 exec/s · fork server · EXPLORE',sc:1083838},
+{id:'LF',ti:1,t0:0,t1:80,l:'LIBFUZZER',d:'35K exec/s · coverage guided · 2 workers',sc:1051698},
+{id:'MUT',ti:1,t0:5,t1:75,l:'MUTATOR',d:'havoc · splice · bit flip · arith',sc:50000},
+{id:'COV',ti:2,t0:10,t1:90,l:'COVERAGE',d:'edge map · 44% coverage · 13 new paths',sc:5000},
+{id:'TRI',ti:2,t0:20,t1:100,l:'CRASH TRIAGE',d:'dedup · minimize · classify',sc:3000},
+{id:'ASN',ti:2,t0:80,t1:120,l:'ASAN CONFIRM',d:'sanitizer replay · stack trace',sc:1000},
+{id:'CON',ti:3,t0:120,t1:145,l:'CONSENSUS',d:'cross-fuzzer crash reinforcement',sc:100},
+],
+outer:['parse_name','alloc_payload','parse_extensions','type_name','parse_chain','parse_packet','memcpy:45','memcpy:73','malloc:56','strlen:118','free:85','free:96','fread:main','hdr→magic','hdr→type','hdr→flags','hdr→name_len','hdr→ext_count','ext→ext_len','ext→ext_type','SIGABRT','SIGSEGV','stack-bof','heap-oob','null-deref','uaf','int-overflow','fmt-string','edge:0x4012','edge:0x4038'],
+ol:'CODE PATHS & BUG CLASSES',
+findings:[
+// AFL early execution (rapid fire)
+...Array.from({length:8},(_,i)=>({t:3+i*2,f:'AFL',s:'INFO',m:'new path #'+(i+1)+' (havoc)'})),
+{t:20,f:'AFL',s:'HIGH',m:'CRASH sig:06 SIGABRT at exec 7543'},
+// libfuzzer faster, finds more paths
+...Array.from({length:12},(_,i)=>({t:2+i*1.5,f:'LF',s:'INFO',m:'NEW cov: edge '+(i+1)+' ('+['bit flip','arith','splice','havoc','insert','erase','change byte','crossover','mutate','custom','copy','shuffle'][i]+')'})),
+{t:15,f:'LF',s:'CRITICAL',m:'CRASH SEGV strlen NULL at parser.c:118'},
+{t:16,f:'LF',s:'HIGH',m:'UBSan: undefined behavior parser.c:118:31'},
+// mutator signals
+{t:10,f:'MUT',s:'LOW',m:'havoc stage: 8 ops per cycle'},
+{t:25,f:'MUT',s:'LOW',m:'splice: combining corpus entries'},
+{t:40,f:'MUT',s:'MEDIUM',m:'dictionary: SMSH magic found useful'},
+// coverage tracking
+{t:15,f:'COV',s:'MEDIUM',m:'coverage jump: 6 → 13 edges'},
+{t:30,f:'COV',s:'LOW',m:'coverage plateau at 44%'},
+{t:50,f:'COV',s:'MEDIUM',m:'new edge via ext_count overflow path'},
+// crash triage
+{t:25,f:'TRI',s:'HIGH',m:'crash dedup: AFL + libfuzzer same root cause'},
+{t:35,f:'TRI',s:'MEDIUM',m:'minimized: 12 bytes reproducer'},
+{t:45,f:'TRI',s:'HIGH',m:'classify: null-deref via type=0xFF'},
+// ASAN confirmation
+{t:85,f:'ASN',s:'CRITICAL',m:'CONFIRMED: SEGV in strlen (parser.c:118)'},
+{t:90,f:'ASN',s:'HIGH',m:'stack trace: parse_packet→type_name→strlen'},
+{t:95,f:'ASN',s:'HIGH',m:'root cause: type_name(0xFF) returns NULL'},
+// consensus
+{t:125,f:'CON',s:'CRITICAL',m:'CONSENSUS: null-deref confirmed by AFL+LF+ASAN'},
+{t:130,f:'CON',s:'HIGH',m:'2 fuzzers · 1 sanitizer · same crash · 12 byte PoC'},
+{t:135,f:'CON',s:'CRITICAL',m:'BUG CLASS: CWE-476 NULL Pointer Dereference'},
+{t:140,f:'CON',s:'HIGH',m:'44% coverage · 13 paths · 37K+1M execs in 30s'},
+],
+reinforcements:[
+// libfuzzer confirms AFL path
+{t:18,a:'LF',b:'AFL'},{t:22,a:'LF',b:'AFL'},
+// coverage confirms both
+{t:20,a:'COV',b:'AFL'},{t:25,a:'COV',b:'LF'},
+// triage confirms crash is same
+{t:30,a:'TRI',b:'AFL'},{t:32,a:'TRI',b:'LF'},
+// mutator feeds both
+{t:35,a:'MUT',b:'AFL'},{t:38,a:'MUT',b:'LF'},
+// ASAN confirms everything
+{t:88,a:'ASN',b:'AFL'},{t:90,a:'ASN',b:'LF'},{t:92,a:'ASN',b:'TRI'},
+// consensus mass reinforcement
+...Array.from({length:10},(_,i)=>({t:122+i*2,a:'CON',b:['AFL','LF','MUT','COV','TRI','ASN','AFL','LF','TRI','ASN'][i]})),
+],
+storm:{id:'AFL',t0:0,t1:80,rate:.9,col:'#f8717155'}}, // AFL exec storm — violent
 ];
 
-const T1L=['DRAGNET','SCANNERS','HUNTERS','OSI LAYERS'],T2L=['DEEP ANALYSIS','CORRELATOR','DEEP CORRELATION','FLOW CORRELATION'];
+const T1L=['DRAGNET','SCANNERS','HUNTERS','OSI LAYERS','FUZZERS'],T2L=['DEEP ANALYSIS','CORRELATOR','DEEP CORRELATION','FLOW CORRELATION','CRASH TRIAGE'];
 
 function initStars(){starField.length=0;for(let i=0;i<300;i++)starField.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+.2,speed:.02+Math.random()*.08,alpha:.1+Math.random()*.3,tw:Math.random()*Math.PI*2})}
 
@@ -560,7 +620,7 @@ if(e.key==='+'||e.key==='=')speed=Math.min(speed*1.5,30);
 if(e.key==='-')speed=Math.max(speed/1.5,.5);
 if(e.key==='r'||e.key==='R')resetState();
 if(e.key==='Escape')exitViz();
-if(e.key>='1'&&e.key<='4')switchTab(+e.key-1);
+if(e.key>='1'&&e.key<='5')switchTab(+e.key-1);
 });
 } // end initViz
 </script>
