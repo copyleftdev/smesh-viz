@@ -183,6 +183,7 @@ nav .nav-r a:hover{color:var(--text)}
     <div class="tab" data-tab="2">THREAT HUNT</div>
     <div class="tab" data-tab="3">OSI · PCAP</div>
     <div class="tab" data-tab="4">FUZZ SWARM</div>
+    <div class="tab" data-tab="5">DARK POOL</div>
   </div>
   <div id="viz-ui">
     <div id="v-hud">
@@ -200,7 +201,7 @@ nav .nav-r a:hover{color:var(--text)}
     </div>
     <div id="v-ticker"></div>
     <div id="v-prov">Not a simulation. Derived from strace -f -c kernel capture.<br>Syscall counts are real. Decay: I(t) = I₀·e⁻ᵏᵗ</div>
-    <div id="v-keys">SPACE pause · +/- speed · R restart · ESC exit · 1-5 missions</div>
+    <div id="v-keys">SPACE pause · +/- speed · R restart · ESC exit · 1-6 missions</div>
   </div>
   <canvas id="c"></canvas>
 </div>
@@ -229,6 +230,7 @@ nav .nav-r a:hover{color:var(--text)}
     {label:'Threat Hunt',sub:'8 hunters · kill chain',col:'#f87171',idx:2,glow:.3,halo:0},
     {label:'OSI · PCAP',sub:'Physics finds the beacon',col:'#34d399',idx:3,glow:.3,halo:0},
     {label:'Fuzz Swarm',sub:'2.1M syscalls · 30s',col:'#ff6633',idx:4,glow:.3,halo:0},
+    {label:'Dark Pool',sub:'10K trades · Polygon.io',col:'#e8a030',idx:5,glow:.3,halo:0},
   ];
   const medges=[],mparticles=[],mstars=[];
   let hover=-1;
@@ -530,10 +532,73 @@ reinforcements:[
 // consensus mass reinforcement
 ...Array.from({length:10},(_,i)=>({t:122+i*2,a:'CON',b:['AFL','LF','MUT','COV','TRI','ASN','AFL','LF','TRI','ASN'][i]})),
 ],
-storm:{id:'AFL',t0:0,t1:80,rate:.9,col:'#f8717155'}}, // AFL exec storm — violent
+storm:{id:'AFL',t0:0,t1:80,rate:.9,col:'#f8717155'}},
+
+{name:'DARK POOL',sub:'809 syscalls · 10K trades · 74 findings · Polygon.io tick-level · 75ms',tt:160,
+phases:[
+{id:'CLS',ti:1,t0:0,t1:15,l:'DARK CLASSIFIER',d:'TRF exchange ID → dark/lit split',sc:200},
+{id:'VOL',ti:1,t0:5,t1:25,l:'VOLUME PROFILER',d:'z-score on dark% · block concentration',sc:150},
+{id:'BLK',ti:1,t0:10,t1:35,l:'BLOCK DETECTOR',d:'≥1K prints · mega blocks ≥10K',sc:120},
+{id:'PER',ti:1,t0:15,t1:50,l:'PERIODICITY',d:'LSR (Random Matrix) on dark flow timing',sc:100},
+{id:'DIV',ti:2,t0:30,t1:60,l:'PRICE DIVERGE',d:'dark VWAP vs lit NBBO · bps spread',sc:80},
+{id:'CRX',ti:2,t0:40,t1:75,l:'CROSS-TICKER',d:'correlated dark elevation across names',sc:60},
+{id:'ANM',ti:2,t0:50,t1:85,l:'ANOMALY ENGINE',d:'EWMA on dark volume · deviation scoring',sc:50},
+{id:'CON',ti:3,t0:90,t1:140,l:'CONSENSUS',d:'multi-agent signal reinforcement',sc:50},
+],
+outer:['AAPL','NVDA','TSLA','META','MSFT','AMZN','JPM','SPY','QQQ','GME','ex:FINRA-ADF','ex:NYSE-TRF','ex:NASDAQ-TRF','ex:Cboe-TRF','dark:34%','dark:59%','dark:54%','dark:56%','block:500K','block:120K','block:275K','flow:2077','flow:443','LSR:0.964','LSR:0.979','LSR:0.973','VWAP:div','EWMA:spike','GOE:regime','CWE:none'],
+ol:'TICKERS & SIGNALS',
+findings:[
+// classifier
+{t:3,f:'CLS',s:'HIGH',m:'NVDA 59% dark pool'},{t:4,f:'CLS',s:'HIGH',m:'MSFT 56% dark pool'},
+{t:5,f:'CLS',s:'MEDIUM',m:'TSLA 54% elevated dark'},{t:6,f:'CLS',s:'INFO',m:'AAPL 34% normal'},
+// volume profiler
+{t:10,f:'VOL',s:'HIGH',m:'JPM block concentration 500K vs avg 5K'},
+{t:12,f:'VOL',s:'HIGH',m:'GME block concentration 120K vs avg 446'},
+{t:14,f:'VOL',s:'HIGH',m:'NVDA block concentration 2K vs avg 60'},
+// block detector - JPM mega blocks
+{t:18,f:'BLK',s:'CRITICAL',m:'JPM MEGA BLOCK 500,000 @ $295.38'},
+{t:19,f:'BLK',s:'CRITICAL',m:'JPM MEGA BLOCK 275,237 @ $295.38'},
+{t:20,f:'BLK',s:'CRITICAL',m:'JPM MEGA BLOCK 200,000 @ $295.38'},
+{t:21,f:'BLK',s:'CRITICAL',m:'JPM MEGA BLOCK 169,669 @ $295.38'},
+{t:22,f:'BLK',s:'CRITICAL',m:'GME MEGA BLOCK 120,600 @ $22.76'},
+{t:24,f:'BLK',s:'HIGH',m:'NVDA 9 blocks ≥1K total 11,313'},
+{t:25,f:'BLK',s:'HIGH',m:'TSLA 6 blocks ≥1K total 8,664'},
+// periodicity - all GOE regime
+{t:28,f:'PER',s:'HIGH',m:'AAPL LSR=0.964 GOE regime'},
+{t:29,f:'PER',s:'HIGH',m:'NVDA LSR=0.979 GOE structured'},
+{t:30,f:'PER',s:'HIGH',m:'TSLA LSR=0.973 GOE algo flow'},
+{t:31,f:'PER',s:'HIGH',m:'SPY LSR=0.979 GOE structured'},
+{t:32,f:'PER',s:'HIGH',m:'GME LSR=0.956 GOE algo flow'},
+// price divergence
+{t:38,f:'DIV',s:'HIGH',m:'SPY dark VWAP 5.2bps below lit'},
+{t:40,f:'DIV',s:'MEDIUM',m:'QQQ dark/lit divergence 2.0bps'},
+// cross-ticker
+{t:48,f:'CRX',s:'HIGH',m:'correlated: NVDA+TSLA+MSFT all >50% dark'},
+{t:52,f:'CRX',s:'MEDIUM',m:'tech sector dark mean 45%'},
+// anomaly
+{t:58,f:'ANM',s:'HIGH',m:'dark volume 2.3x EWMA deviation'},
+// consensus cascade
+{t:95,f:'CON',s:'CRITICAL',m:'JPM CONSENSUS: 22 HIGH+ across BLOCK+PERIODIC+VOLUME'},
+{t:100,f:'CON',s:'CRITICAL',m:'NVDA CONSENSUS: 5 HIGH+ across 5 agents'},
+{t:105,f:'CON',s:'CRITICAL',m:'MSFT CONSENSUS: 5 HIGH+ across 5 agents'},
+{t:110,f:'CON',s:'CRITICAL',m:'TSLA CONSENSUS: 4 HIGH+ across 4 agents'},
+{t:115,f:'CON',s:'CRITICAL',m:'SPY CONSENSUS: 4 HIGH+ across BLOCK+PERIODIC+DIVERGE'},
+{t:120,f:'CON',s:'CRITICAL',m:'GME CONSENSUS: 4 HIGH+ across BLOCK+PERIODIC+VOLUME'},
+{t:125,f:'CON',s:'HIGH',m:'ALL 10 tickers show GOE-regime dark flow'},
+{t:130,f:'CON',s:'HIGH',m:'74 total findings · 809 syscalls · 75ms execution'},
+],
+reinforcements:[
+{t:13,a:'VOL',b:'CLS'},{t:16,a:'BLK',b:'VOL'},{t:23,a:'BLK',b:'CLS'},
+{t:33,a:'PER',b:'CLS'},{t:35,a:'PER',b:'BLK'},{t:42,a:'DIV',b:'VOL'},
+{t:50,a:'CRX',b:'CLS'},{t:55,a:'CRX',b:'PER'},{t:60,a:'ANM',b:'VOL'},
+{t:65,a:'ANM',b:'BLK'},{t:70,a:'CRX',b:'DIV'},
+// consensus mass reinforcement
+...Array.from({length:14},(_,i)=>({t:92+i*3,a:'CON',b:['CLS','VOL','BLK','PER','DIV','CRX','ANM','CLS','VOL','BLK','PER','DIV','CRX','ANM'][i]})),
+],
+storm:{id:'CLS',t0:0,t1:15,rate:.6,col:'#e8a03044'}},
 ];
 
-const T1L=['DRAGNET','SCANNERS','HUNTERS','OSI LAYERS','FUZZERS'],T2L=['DEEP ANALYSIS','CORRELATOR','DEEP CORRELATION','FLOW CORRELATION','CRASH TRIAGE'];
+const T1L=['DRAGNET','SCANNERS','HUNTERS','OSI LAYERS','FUZZERS','CLASSIFIERS'],T2L=['DEEP ANALYSIS','CORRELATOR','DEEP CORRELATION','FLOW CORRELATION','CRASH TRIAGE','CROSS-TICKER'];
 
 function initStars(){starField.length=0;for(let i=0;i<300;i++)starField.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+.2,speed:.02+Math.random()*.08,alpha:.1+Math.random()*.3,tw:Math.random()*Math.PI*2})}
 
@@ -620,7 +685,7 @@ if(e.key==='+'||e.key==='=')speed=Math.min(speed*1.5,30);
 if(e.key==='-')speed=Math.max(speed/1.5,.5);
 if(e.key==='r'||e.key==='R')resetState();
 if(e.key==='Escape')exitViz();
-if(e.key>='1'&&e.key<='5')switchTab(+e.key-1);
+if(e.key>='1'&&e.key<='6')switchTab(+e.key-1);
 });
 } // end initViz
 </script>
